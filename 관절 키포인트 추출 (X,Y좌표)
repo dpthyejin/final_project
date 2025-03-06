@@ -1,0 +1,42 @@
+# JSON 파일 읽고 키포인트 데이터 x,y좌표만 정리, csv 파일로 저장
+
+import os
+import json
+import pandas as pd
+
+# JSON 파일이 저장된 폴더 경로
+json_dir = r"C:\Users\Admin\Desktop\Final_Project\Sample\Sample\2.라벨링데이터"
+
+# 결과 저장 리스트
+data_list = []
+
+# 폴더 내 모든 JSON 파일을 불러오기
+for filename in os.listdir(json_dir):
+    if filename.endswith(".json"):
+        file_path = os.path.join(json_dir, filename)
+
+        # JSON 파일 열기
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        # 키포인트 데이터 추출
+        for annotation in data["annotations"]:
+            keypoints = annotation["keypoints"]
+            keypoint_data = {"file": filename}
+
+            # 각 키포인트(x, y) 저장
+            for i, (x, y, visibility) in enumerate(keypoints):
+                keypoint_data[f"x_{i}"] = x
+                keypoint_data[f"y_{i}"] = y
+                keypoint_data[f"v_{i}"] = visibility  # 가시성
+
+            data_list.append(keypoint_data)
+
+# 데이터프레임으로 변환
+df = pd.DataFrame(data_list)
+
+# 결과 확인
+print(df.head())
+
+# CSV 파일로 저장 (선택 사항)
+df.to_csv("keypoints_data.csv", index=False)
