@@ -1,0 +1,54 @@
+# 1단계: 환경 설정
+pip install streamlit
+
+# 2단계: 데이터 준비
+import pandas as pd
+
+data = pd.read_csv('data.csv')
+
+# 3단계: 기본 레이아웃 설정
+import streamlit as st
+
+st.title("작업자 건강 모니터링 보고서")
+
+st.subheader("근로자의 작업 자세 분석 및 개선 방안 제공")
+
+# 4단계: 시각화 준비 (작업 자세 시각화)
+import matplotlib.pyplot as plt
+
+# 예시: 근로자 자세 산점도
+st.subheader("근로자 작업 자세 분석")
+
+fig, ax = plt.subplots()
+ax.scatter(data['x'], data['y'], color='blue')  # x, y 좌표 예시
+ax.set_title("작업 자세 산점도")
+st.pyplot(fig)
+
+# 시각화 준비 (근골격계 부담이 가는 자세 시각화) 
+import seaborn as sns
+
+# 예시: 히트맵 시각화
+st.subheader("근골격계 부담이 가는 자세")
+
+heatmap_data = data[['부위', '부담 정도']]  # 가상의 데이터
+fig, ax = plt.subplots()
+sns.heatmap(heatmap_data.pivot('부위', '부담 정도'), cmap='Blues', annot=True)
+st.pyplot(fig)
+
+# 시각화 준비 (대체 가능한 자세 제시)
+st.subheader("대체 가능한 작업 자세")
+
+image = 'alternative_posture.jpg'  # 예시 이미지
+st.image(image, caption="대체 가능한 자세")
+
+# 5단계: 상호작용 기능 추가
+# 사용자가 선택할 수 있는 드롭다운 예시
+selected_posture = st.selectbox('근로자 자세 선택', ['좋은 자세', '나쁜 자세'])
+
+if selected_posture == '나쁜 자세':
+    st.write("나쁜 자세를 선택했습니다. 개선 방법을 제공할 수 있습니다.")
+    # 개선 방법을 이미지나 텍스트로 제공
+
+# 6단계: 결과 출력 및 배포
+streamlit run your_script.py
+
