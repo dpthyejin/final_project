@@ -1,0 +1,111 @@
+import pandas as pd
+import streamlit as st
+import matplotlib.pyplot as plt
+import seaborn as sns
+from PIL import Image
+import matplotlib
+
+# 한글 폰트 설정 (윈도우에서 '맑은 고딕' 사용)
+matplotlib.rcParams['font.family'] = 'Malgun Gothic'
+
+# 파일 로드
+data = pd.read_csv(r'C:/Users/Admin/Desktop/Final_Project/merged_data_with_fileID.csv')
+
+# REBA 스코어와 각도에 따른 자세 평가 함수
+def evaluate_posture(row):
+    trunk_angle = row['trunk_angle']
+    reba_score = row['final_reba_score']
+    
+    if trunk_angle >= 90 and reba_score >= 7:
+        return 'High Risk: Possible Lower Back Pain'
+    elif reba_score >= 7:
+        return 'Moderate Risk: Consider Posture Adjustment'
+    else:
+        return 'Safe: Good Posture'
+
+# 각 작업자의 자세 평가 결과 추가
+data['posture_alert'] = data.apply(evaluate_posture, axis=1)
+
+# Streamlit 대시보드 제목
+st.title("작업자 건강 모니터링 보고서")
+
+# 서브 제목
+st.subheader("근로자의 작업 자세 분석 및 개선 방안 제공")
+
+# 1) 작업자의 좋지 않은 자세를 보여주는 사진
+st.markdown("### 🚨 작업자의 좋지 않은 자세 사진")
+image_path = r'C:/Users/Admin/Desktop/Final_Project/Sample/Sample/1.원천데이터/F05_P001_A2_W001_D2022-09-23-10-04-45_0254.jpg'  # 실제 경로로 수정
+
+# PIL을 사용하여 이미지 열기
+try:
+    image = Image.open(image_path)  # PIL을 사용하여 이미지 열기
+    st.image(image, caption="작업자의 자세 분석", use_container_width=True)  # Streamlit에 이미지 표시
+except Exception as e:
+    st.error(f"이미지를 로드할 수 없습니다. 경로: {image_path}가 정확한지 확인해 주세요. 오류: {e}")
+
+# 2) 이로 인해 부담될 수 있는 관절
+st.markdown("### 💪 이로 인해 부담될 수 있는 관절")
+angles = ['trunk_angle', 'neck_angle', 'shoulder_angle', 'elbow_angle', 'wrist_angle']
+angle_values = [data.iloc[0][angle] for angle in angles]
+
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.bar(angles, angle_values, color='orange')
+ax.set_xlabel('관절 부위')
+ax.set_ylabel('각도 (도)')
+ax.set_title('관절 부담 각도')
+st.pyplot(fig)
+
+# 3) 과도한 힘을 쓰는 부위 (히트맵 또는 바차트)
+st.markdown("### 💥 과도한 힘을 쓰는 부위")
+muscle_areas = ['Neck', 'Back', 'Legs', 'Arms', 'Shoulders']
+energy_usage = [80, 60, 50, 40, 30]
+plt.figure(figsize=(10, 6))
+sns.barplot(x=muscle_areas, y=energy_usage, palette='viridis')
+plt.xlabel('근육 부위')
+plt.ylabel('에너지 사용량')
+plt.title('과도한 힘을 쓰는 부위')
+st.pyplot(plt)
+
+# 4) 대체 가능한 작업 자세 제시와 근관절 건강에 도움이 되는 운동을 옆에 배치
+col1, col2 = st.columns(2)  # 2개의 컬럼 생성
+
+with col1:
+    st.markdown("### 🔄 대체 가능한 작업 자세 제시")
+    # 대체 자세 아이콘 또는 이미지 (파일 경로 수정)
+    alternative_posture_image = r'C:/Users/Admin/Desktop/Final_Project/alternative_posture.png'  # 경로 수정
+    st.image(alternative_posture_image, caption="대체 작업 자세", use_container_width=True)  # use_container_width로 변경
+
+with col2:
+    st.markdown("### 🏋️‍♂️ 근관절 건강에 도움이 되는 운동")
+    # 운동 아이콘 또는 이미지 (파일 경로 수정)
+    exercise_image = r'C:/Users/Admin/Desktop/Final_Project/exercise_icon.png'  # 경로 수정
+    st.image(exercise_image, caption="근관절 건강 운동", use_container_width=True)  # use_container_width로 변경
+
+# 각 작업자의 알림 (작업자별 알림 요약)
+# 작업자 상태 요약
+high_risk_workers = data[data['posture_alert'] == 'High Risk: Possible Lower Back Pain']
+moderate_risk_workers = data[data['posture_alert'] == 'Moderate Risk: Consider Posture Adjustment']
+
+# 알림을 한 번만 띄우도록 처리
+alerted_workers = set()  # 이미 알림을 받은 작업자
+
+# 고위험 작업자 요약
+st.markdown(f"### ⚠️ 고위험 상태인 작업자: {len(high_risk_workers)}명")
+for _, row in high_risk_workers.iterrows():
+    worker_id = row['fileID']
+    
+    # 이미 알림을 띄운 작업자는 제외
+    if worker_id not in alerted_workers:
+        st.warning(f"작업자 {worker_id}는 허리 통증 위험이 있습니다.")
+        alerted_workers.add(worker_id)
+
+# 주의가 필요한 작업자 요약
+st.markdown(f"### ⚠️ 주의가 필요한 작업자: {len(moderate_risk_workers)}명")
+for _, row in moderate_risk_workers.iterrows():
+    worker_id = row['fileID']
+    
+    # 이미 알림을 띄운 작업자는 제외
+    if worker_id not in alerted_workers:
+        st.info(f"작업자 {worker_id}는 자세가 좋지 않습니다.")
+        alerted_workers.add(worker_id)
+
